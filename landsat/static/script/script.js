@@ -84,12 +84,27 @@ require([
     });
   }
 
-  view.on("click", (event) => {
+  function getid(lat, lon) {
+    const url = `/displayid/?lat=${lat}&lon=${lon}`;
+    return fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        return data.Display_ID;
+      })
+      .catch((error) => {
+        console.error("Error: ", error);
+        return null;
+      });
+  }
+
+  view.on("click", async (event) => {
     // Get the coordinates of the click on the view
     const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
     const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+    var id;
     view.graphics.removeAll();
 
+    const displayID = await getid(lat, lon);
     view.goTo({
       center: [lon, lat],
       zoom: 16, // Adjust zoom level here as needed
@@ -101,7 +116,6 @@ require([
     const bbox = `${lat},${lon},${lat},${lon}`;
     const satellites = "Landsat-8,Landsat-9";
     const url = `https://api.spectator.earth/overpass/?bbox=${bbox}&satellites=${satellites}&api_key=${api_key}`;
-
     fetch(url)
       .then(function (response) {
         return response.json();
@@ -127,6 +141,9 @@ require([
                           <td>${data.overpasses[1].date}</td>
                       </tr>
                   </table>
+                  <br>
+                  <h3>Point found in Landsat scene</h3>
+                  <h4>${displayID}</h4>
               `;
 
         const popupLocation = {
@@ -134,6 +151,7 @@ require([
           longitude: lon,
         };
         // Set the popup content to the table
+
         view.openPopup({
           // Set the popup's title to the coordinates of the location
           title: "Coordinates: [" + lat + ", " + lon + "]",
@@ -161,17 +179,30 @@ require([
                           <th>Date</th>
                           <th>Time</th>
                       </tr>
-                      <tr>
-                          <td>${data.overpasses[0].satellite}</td>
-                          <td>${data.overpasses[0].date}</td>
-                          <td>${data.overpasses[0].date}</td>
                       </tr>
-                      <tr>
-                          <td>${data.overpasses[1].satellite}</td>
-                          <td>${data.overpasses[1].date}</td>
-                          <td>${data.overpasses[1].date}</td>
-                      </tr>
+                ${data.overpasses
+                  .map((overpass) => {
+                    const dateTime = overpass.date.split("T"); // Split the date and time
+                    const date = dateTime[0]; // Date part
+                    const time = dateTime[1].replace("Z", ""); // Time part without 'Z'
+
+                    return `
+                        <tr>
+                            <td>${overpass.satellite}</td>
+                            <td>${date}</td>
+                            <td>${time}</td>
+                        </tr>
+                    `;
+                    //   <tr>
+                    //       <td>${data.overpasses[1].satellite}</td>
+                    //       <td>${data.overpasses[1].date}</td>
+                    //       <td>${data.overpasses[1].date}</td>
+                    //   </tr>
+                  })
+                  .join("")}
                   </table>
+                  <h3>Point found in Landsat scene</h3>
+                  <h4>${displayID}</h4>
               `;
           })
           .catch(() => {
