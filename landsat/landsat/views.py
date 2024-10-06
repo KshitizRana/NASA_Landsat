@@ -16,6 +16,19 @@ df = pd.read_csv('../landsat/data/landsat_agg.csv')
 df.drop(['Unnamed: 0'],axis=1,inplace=True,errors='ignore')
 
 def point_in_polygon(lat, lon, upper_left, upper_right, lower_left, lower_right):
+    """_summary_
+
+    Parameters
+    ----------
+    lat : Intended latitude
+    lon : Intended longitude
+    upper_left : Upper Left Coordinates of Landsat scene
+    upper_right : Upper Right Coordinates of Landsat scene
+    lower_left : Lower Left Coordinates of Landsat scene
+    lower_right : Lower Right Coordinates of Landsat scene
+
+    Returns True or False after analysing 
+    """
     # Extract latitude and longitude for the bounding box corners
     min_lat = min(lower_left[0], lower_right[0])
     max_lat = max(upper_left[0], upper_right[0])
@@ -27,6 +40,14 @@ def point_in_polygon(lat, lon, upper_left, upper_right, lower_left, lower_right)
     return False
 
 def check_point_in_polygon(request):
+    """
+    Providing data to point_to_polygon
+    Parameters
+    ----------
+    request : Request recieved from js
+
+    Returns-Landsat_Scene_ID
+    """
     if request.method=='GET':
             lat=float(request.GET.get('lat',0))
             lon=float(request.GET.get('lon',0))

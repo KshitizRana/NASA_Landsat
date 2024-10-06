@@ -21,6 +21,7 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.home,name='home'),
-    path('displayid/',views.check_point_in_polygon,name='displayid'),
+    path('displayid/',views.check_point_in_polygon,name='displayid'), 
+    
     
 ]
