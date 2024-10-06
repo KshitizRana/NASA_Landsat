@@ -5,14 +5,15 @@ require([
   "esri/rest/locator",
   "esri/geometry/Polygon",
   "esri/geometry/SpatialReference",
-], (Map, MapView, Graphic, locator, Polygon, SpatialReference) => {
+  "esri/widgets/Search",
+], (Map, MapView, Graphic, locator, Polygon, SpatialReference, Search) => {
   // Set up a locator url using the world geocoding service
   const locatorUrl =
     "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer";
 
   // Create the Map
   const map = new Map({
-    basemap: "satellite",
+    basemap: "hybrid",
   });
 
   // Create the MapView
@@ -22,14 +23,16 @@ require([
     center: [-71.6899, 43.7598],
     zoom: 17,
   });
-
+  //PopUP
   view.popupEnabled = false;
+  //Creating Grid
   const pixelSize = 0.00027;
 
   const surroundingColor = [169, 209, 142, 0.5]; // Light green for surrounding pixels (50% opacity)
   const targetColor = [0, 255, 255, 0.8];
 
   function createPixelGrid(lat, lon) {
+    //function is proposing 3x3 grid
     const gridBoxes = [];
     let color;
 
@@ -68,6 +71,7 @@ require([
   }
 
   function drawGrid(gridBoxes) {
+    //Creating a grid
     gridBoxes.forEach((box) => {
       const boxGraphic = new Graphic({
         geometry: box.polygon,
@@ -85,6 +89,7 @@ require([
   }
 
   function getid(lat, lon) {
+    //Getting Landsat Scene id
     const url = `/displayid/?lat=${lat}&lon=${lon}`;
     return fetch(url)
       .then((response) => response.json())
@@ -96,12 +101,45 @@ require([
         return null;
       });
   }
+  //Integrating Search Location Functionality
+  const searchWidget = new Search({
+    view: view, // Associate the search widget with the view
+    sources: [
+      {
+        locator: locatorUrl, // Geocoding service
+        singleLineFieldName: "SingleLine",
+        outFields: ["*"],
+        placeholder: "Search for a location",
+      },
+    ],
+  });
+
+  view.ui.add(searchWidget, {
+    position: "top-right",
+  });
+
+  searchWidget.on("select-result", async (event) => {
+    //Visits Searched Location
+    const lat = event.result.feature.geometry.latitude;
+    const lon = event.result.feature.geometry.longitude;
+
+    view.graphics.removeAll();
+
+    view.goTo({
+      //Visiting Searchrd Location
+      center: [lon, lat],
+      zoom: 16, // Adjust zoom level here
+    });
+    view.popup.visible = false;
+    getid(lat, lon).then((displayID) => {
+      console.log(`Display ID: ${displayID}`);
+    });
+  });
 
   view.on("click", async (event) => {
     // Get the coordinates of the click on the view
     const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
     const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
-    var id;
     view.graphics.removeAll();
 
     const displayID = await getid(lat, lon);
@@ -116,7 +154,7 @@ require([
     const bbox = `${lat},${lon},${lat},${lon}`;
     const satellites = "Landsat-8,Landsat-9";
     const url = `https://api.spectator.earth/overpass/?bbox=${bbox}&satellites=${satellites}&api_key=${api_key}`;
-    fetch(url)
+    fetch(url) //fetching LandSat Acqisition Data
       .then(function (response) {
         return response.json();
       })
