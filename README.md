@@ -23,6 +23,12 @@
 - It determines Landsat scene that contains the target pixel using the Worldwide Reference System-2 (WRS-2) and display the Landsat scene extent on a map.
 - It provides a feature to download the metadata of the target scene in csv format.
 
+### Preview
+![image](https://github.com/user-attachments/assets/e624dd08-92c0-4c39-8733-dafc7b56c84a)
+
+![image](https://github.com/user-attachments/assets/2240c232-8664-435e-aade-bbfad7abc96c)
+
+
 ### Team
 
 [Kshitiz Rana](https://github.com/KshitizRana)
